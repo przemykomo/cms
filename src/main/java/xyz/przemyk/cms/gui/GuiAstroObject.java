@@ -6,6 +6,7 @@ import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.math.vector.Matrix4f;
+import net.minecraft.util.math.vector.Vector2f;
 import net.minecraft.util.text.StringTextComponent;
 import org.lwjgl.opengl.GL11;
 
@@ -21,14 +22,20 @@ public class GuiAstroObject {
     private final int textureX;
     private final int textureY;
     private final float size;
+    private final int orbitTime;
+    private final int sideTime;
+    private final int startingTicks;
 
-    public GuiAstroObject(int orbitDistance, ControlStationScreen screen, String name, int textureX, int textureY, float size) {
+    public GuiAstroObject(int orbitDistance, ControlStationScreen screen, String name, int textureX, int textureY, float size, int orbitTime, int startingTicks) {
         this.orbitDistance = orbitDistance;
         this.screen = screen;
         this.name = name;
         this.textureX = textureX;
         this.textureY = textureY;
         this.size = size;
+        this.orbitTime = orbitTime;
+        this.sideTime = orbitTime / 4;
+        this.startingTicks = startingTicks;
     }
 
     public GuiAstroObject addSatellite(GuiAstroObject satellite) {
@@ -39,7 +46,8 @@ public class GuiAstroObject {
     public void render(MatrixStack matrixStack, float partialTicks) {
         renderOrbit(matrixStack);
         matrixStack.push();
-        matrixStack.translate(orbitDistance, 0, 0);
+        Vector2f pos = getOrbitPos(partialTicks);
+        matrixStack.translate(pos.x, pos.y, 0);
 
         matrixStack.push();
         matrixStack.scale(size, size, size);
@@ -50,6 +58,26 @@ public class GuiAstroObject {
             satellite.render(matrixStack, partialTicks);
         }
         matrixStack.pop();
+    }
+
+    protected Vector2f getOrbitPos(float partialTicks) {
+        float ticks = (screen.ticks + startingTicks) % orbitTime;
+        float sideTicks = ticks % sideTime + partialTicks;
+        float scaledSidePos = sideTicks / sideTime * 2 * orbitDistance - orbitDistance;
+
+        if (ticks < sideTime) {
+            return new Vector2f(orbitDistance, -scaledSidePos);
+        }
+
+        if (sideTime <= ticks && ticks < sideTime * 2) {
+            return new Vector2f(-scaledSidePos, -orbitDistance);
+        }
+
+        if (sideTime * 2 <= ticks && ticks < sideTime * 3) {
+            return new Vector2f(-orbitDistance, scaledSidePos);
+        }
+
+        return new Vector2f(scaledSidePos, orbitDistance);
     }
 
     protected void renderOrbit(MatrixStack matrixStack) {
@@ -68,7 +96,9 @@ public class GuiAstroObject {
     }
 
     public boolean renderHoveredTooltip(MatrixStack matrixStack, int x, int y, double centerX, double centerY, double scale) {
-        centerX += orbitDistance * scale;
+        Vector2f pos = getOrbitPos(0);
+        centerX += pos.x * scale;
+        centerY += pos.y * scale;
         double radius = 4 * scale * this.size;
         if (x > centerX - radius && x < centerX + radius && y > centerY - radius && y < centerY + radius) {
             screen.renderTooltip(matrixStack, new StringTextComponent(name), x, y);

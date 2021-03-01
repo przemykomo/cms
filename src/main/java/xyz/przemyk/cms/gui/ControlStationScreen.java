@@ -29,18 +29,18 @@ public class ControlStationScreen extends ContainerScreen<ControlStationContaine
 
     public ControlStationScreen(ControlStationContainer screenContainer, PlayerInventory inv, ITextComponent titleIn) {
         super(screenContainer, inv, titleIn);
-        sun = new GuiAstroObject(0, this, "Sun", 176, 0, 3f)
-                .addSatellite(new GuiAstroObject(40, this, "Mercury", 184, 0, 1f))
-                .addSatellite(new GuiAstroObject(80, this, "Venus", 192, 0, 1f))
-                .addSatellite(new GuiAstroObject(120, this, "Earth", 200, 0, 1f)
-                    .addSatellite(new GuiAstroObject(15, this, "Moon", 200, 8, 0.5f)))
-                .addSatellite(new GuiAstroObject(160, this, "Mars", 208, 0, 1f))
-                .addSatellite(new GuiAstroObject(200, this, "Jupiter", 216, 0, 1.5f))
-                .addSatellite(new GuiAstroObject(260, this, "Saturn", 224, 0, 1.5f)
-                    .addSatellite(new GuiAstroObject(15, this, "Titan", 224, 8, 0.5f)))
-                .addSatellite(new GuiAstroObject(300, this, "Uranus", 232, 0, 1.2f))
-                .addSatellite(new GuiAstroObject(350, this, "Neptune", 240, 0, 1.2f))
-                .addSatellite(new GuiAstroObject(380, this, "Pluto", 248, 0, 0.7f));
+        sun = new GuiAstroObject(0, this, "Sun", 176, 0, 3f, 4, 0)
+                .addSatellite(new GuiAstroObject(40, this, "Mercury", 184, 0, 1f, 482, 30))
+                .addSatellite(new GuiAstroObject(80, this, "Venus", 192, 0, 1f, 1230, 90))
+                .addSatellite(new GuiAstroObject(120, this, "Earth", 200, 0, 1f, 2000, 40)
+                    .addSatellite(new GuiAstroObject(15, this, "Moon", 200, 8, 0.5f, 146, 5)))
+                .addSatellite(new GuiAstroObject(160, this, "Mars", 208, 0, 1f, 3760, 400))
+                .addSatellite(new GuiAstroObject(200, this, "Jupiter", 216, 0, 1.5f, 23726, 243))
+                .addSatellite(new GuiAstroObject(260, this, "Saturn", 224, 0, 1.5f, 58894, 1020)
+                    .addSatellite(new GuiAstroObject(15, this, "Titan", 224, 8, 0.5f, 88, 12)))
+                .addSatellite(new GuiAstroObject(300, this, "Uranus", 232, 0, 1.2f, 168034, 15))
+                .addSatellite(new GuiAstroObject(350, this, "Neptune", 240, 0, 1.2f, 329582, 1400))
+                .addSatellite(new GuiAstroObject(380, this, "Pluto", 248, 0, 0.7f, 495880, 890));
     }
 
     @Override
