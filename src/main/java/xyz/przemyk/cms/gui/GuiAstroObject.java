@@ -1,7 +1,13 @@
 package xyz.przemyk.cms.gui;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.text.StringTextComponent;
+import org.lwjgl.opengl.GL11;
 
 import java.util.ArrayList;
 
@@ -31,6 +37,7 @@ public class GuiAstroObject {
     }
 
     public void render(MatrixStack matrixStack, float partialTicks) {
+        renderOrbit(matrixStack);
         matrixStack.push();
         matrixStack.translate(orbitDistance, 0, 0);
 
@@ -43,6 +50,21 @@ public class GuiAstroObject {
             satellite.render(matrixStack, partialTicks);
         }
         matrixStack.pop();
+    }
+
+    protected void renderOrbit(MatrixStack matrixStack) {
+        RenderSystem.disableTexture();
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder bufferbuilder = tessellator.getBuffer();
+        RenderSystem.lineWidth(1.0F);
+        bufferbuilder.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_COLOR);
+        Matrix4f matrix4f = matrixStack.getLast().getMatrix();
+        bufferbuilder.pos(matrix4f, -orbitDistance, orbitDistance, 0).color(0.2F, 0.2F, 1F, 1F).endVertex();
+        bufferbuilder.pos(matrix4f, orbitDistance, orbitDistance, 0).color(0.2F, 0.2F, 1F, 1F).endVertex();
+        bufferbuilder.pos(matrix4f, orbitDistance, -orbitDistance, 0).color(0.2F, 0.2F, 1F, 1F).endVertex();
+        bufferbuilder.pos(matrix4f, -orbitDistance, -orbitDistance, 0).color(0.2F, 0.2F, 1F, 1F).endVertex();
+        tessellator.draw();
+        RenderSystem.enableTexture();
     }
 
     public boolean renderHoveredTooltip(MatrixStack matrixStack, int x, int y, double centerX, double centerY, double scale) {
