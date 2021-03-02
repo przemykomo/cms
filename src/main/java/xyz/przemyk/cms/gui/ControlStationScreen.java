@@ -21,11 +21,12 @@ public class ControlStationScreen extends ContainerScreen<ControlStationContaine
 
     public int ticks;
 
-    private double scale = 1.0;
-    private double posX;
-    private double posY;
+    public double scale = 1.0;
+    public double posX;
+    public double posY;
 
     private final GuiAstroObject sun;
+    public GuiAstroObject selectedObject;
 
     public ControlStationScreen(ControlStationContainer screenContainer, PlayerInventory inv, ITextComponent titleIn) {
         super(screenContainer, inv, titleIn);
@@ -47,6 +48,10 @@ public class ControlStationScreen extends ContainerScreen<ControlStationContaine
     public void tick() {
         super.tick();
         ticks++;
+
+        if (selectedObject != null) {
+            selectedObject.selectedTick();
+        }
     }
 
     @Override
@@ -77,9 +82,9 @@ public class ControlStationScreen extends ContainerScreen<ControlStationContaine
     }
 
     @Override
-    protected void renderHoveredTooltip(MatrixStack matrixStack, int x, int y) {
-        if (isPointInRegion(DISPLAY_X, DISPLAY_Y, DISPLAY_WIDTH, DISPLAY_HEIGHT, x, y)) {
-            sun.renderHoveredTooltip(matrixStack, x, y, guiLeft + DISPLAY_CENTER_X + posX, guiTop + DISPLAY_CENTER_Y + posY, scale);
+    protected void renderHoveredTooltip(MatrixStack matrixStack, int mouseX, int mouseY) {
+        if (isPointInRegion(DISPLAY_X, DISPLAY_Y, DISPLAY_WIDTH, DISPLAY_HEIGHT, mouseX, mouseY)) {
+            sun.renderHoveredTooltip(matrixStack, mouseX, mouseY, guiLeft + DISPLAY_CENTER_X + posX, guiTop + DISPLAY_CENTER_Y + posY, scale);
         }
     }
 
@@ -108,5 +113,14 @@ public class ControlStationScreen extends ContainerScreen<ControlStationContaine
             return true;
         }
         return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (sun.mouseClicked(mouseX, mouseY, button, guiLeft + DISPLAY_CENTER_X + posX, guiTop + DISPLAY_CENTER_Y + posY, scale)) {
+            return true;
+        }
+        selectedObject = null;
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 }

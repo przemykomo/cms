@@ -25,6 +25,7 @@ public class GuiAstroObject {
     private final int orbitTime;
     private final int sideTime;
     private final int startingTicks;
+    public GuiAstroObject parentObject;
 
     public GuiAstroObject(int orbitDistance, ControlStationScreen screen, String name, int textureX, int textureY, float size, int orbitTime, int startingTicks) {
         this.orbitDistance = orbitDistance;
@@ -40,13 +41,15 @@ public class GuiAstroObject {
 
     public GuiAstroObject addSatellite(GuiAstroObject satellite) {
         satellites.add(satellite);
+        satellite.parentObject = this;
         return this;
     }
 
+    @SuppressWarnings("unused")
     public void render(MatrixStack matrixStack, float partialTicks) {
         renderOrbit(matrixStack);
         matrixStack.push();
-        Vector2f pos = getOrbitPos(partialTicks);
+        Vector2f pos = getRelativePos();
         matrixStack.translate(pos.x, pos.y, 0);
 
         matrixStack.push();
@@ -60,9 +63,9 @@ public class GuiAstroObject {
         matrixStack.pop();
     }
 
-    protected Vector2f getOrbitPos(float partialTicks) {
+    protected Vector2f getRelativePos() {
         float ticks = (screen.ticks + startingTicks) % orbitTime;
-        float sideTicks = ticks % sideTime + partialTicks;
+        float sideTicks = ticks % sideTime;
         float scaledSidePos = sideTicks / sideTime * 2 * orbitDistance - orbitDistance;
 
         if (ticks < sideTime) {
@@ -80,6 +83,15 @@ public class GuiAstroObject {
         return new Vector2f(scaledSidePos, orbitDistance);
     }
 
+    protected Vector2f getAbsolutePos() {
+        if (parentObject == null) {
+            return getRelativePos();
+        }
+        Vector2f parentPos = parentObject.getAbsolutePos();
+        Vector2f relativePos = getRelativePos();
+        return new Vector2f(parentPos.x + relativePos.x, parentPos.y + relativePos.y);
+    }
+
     protected void renderOrbit(MatrixStack matrixStack) {
         RenderSystem.disableTexture();
         Tessellator tessellator = Tessellator.getInstance();
@@ -95,22 +107,47 @@ public class GuiAstroObject {
         RenderSystem.enableTexture();
     }
 
-    public boolean renderHoveredTooltip(MatrixStack matrixStack, int x, int y, double centerX, double centerY, double scale) {
-        Vector2f pos = getOrbitPos(0);
+    public boolean renderHoveredTooltip(MatrixStack matrixStack, int mouseX, int mouseY, double centerX, double centerY, double scale) {
+        Vector2f pos = getRelativePos();
         centerX += pos.x * scale;
         centerY += pos.y * scale;
         double radius = 4 * scale * this.size;
-        if (x > centerX - radius && x < centerX + radius && y > centerY - radius && y < centerY + radius) {
-            screen.renderTooltip(matrixStack, new StringTextComponent(name), x, y);
+        if (mouseX > centerX - radius && mouseX < centerX + radius && mouseY > centerY - radius && mouseY < centerY + radius) {
+            screen.renderTooltip(matrixStack, new StringTextComponent(name), mouseX, mouseY);
             return true;
         }
 
         for (GuiAstroObject satellite : satellites) {
-            if (satellite.renderHoveredTooltip(matrixStack, x, y, centerX, centerY, scale)) {
+            if (satellite.renderHoveredTooltip(matrixStack, mouseX, mouseY, centerX, centerY, scale)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    public boolean mouseClicked(double mouseX, double mouseY, int button, double centerX, double centerY, double scale) {
+        Vector2f pos = getRelativePos();
+        centerX += pos.x * scale;
+        centerY += pos.y * scale;
+        double radius = 4 * scale * this.size;
+        if (mouseX > centerX - radius && mouseX < centerX + radius && mouseY > centerY - radius && mouseY < centerY + radius) {
+            screen.selectedObject = this;
+            return true;
+        }
+
+        for (GuiAstroObject satellite : satellites) {
+            if (satellite.mouseClicked(mouseX, mouseY, button, centerX, centerY, scale)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public void selectedTick() {
+        Vector2f pos = getAbsolutePos();
+        screen.posX = -pos.x * screen.scale;
+        screen.posY = -pos.y * screen.scale;
     }
 }
