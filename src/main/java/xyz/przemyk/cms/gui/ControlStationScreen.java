@@ -58,6 +58,9 @@ public class ControlStationScreen extends ContainerScreen<ControlStationContaine
     public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         renderBackground(matrixStack);
         super.render(matrixStack, mouseX, mouseY, partialTicks);
+        if (selectedObject != null) {
+            selectedObject.renderSelected(matrixStack, partialTicks, guiLeft, guiTop);
+        }
         renderHoveredTooltip(matrixStack, mouseX, mouseY);
     }
 

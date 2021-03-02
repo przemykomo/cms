@@ -2,15 +2,19 @@ package xyz.przemyk.cms.gui;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector2f;
 import net.minecraft.util.text.StringTextComponent;
+import net.minecraftforge.fml.client.gui.GuiUtils;
 import org.lwjgl.opengl.GL11;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 
 public class GuiAstroObject {
 
@@ -126,6 +130,7 @@ public class GuiAstroObject {
         return false;
     }
 
+    @SuppressWarnings("unused")
     public boolean mouseClicked(double mouseX, double mouseY, int button, double centerX, double centerY, double scale) {
         Vector2f pos = getRelativePos();
         centerX += pos.x * scale;
@@ -149,5 +154,20 @@ public class GuiAstroObject {
         Vector2f pos = getAbsolutePos();
         screen.posX = -pos.x * screen.scale;
         screen.posY = -pos.y * screen.scale;
+    }
+
+    @SuppressWarnings("unused")
+    public void renderSelected(MatrixStack matrixStack, float partialTicks, int guiLeft, int guiTop) {
+        GuiUtils.drawHoveringText(matrixStack,
+                Collections.singletonList(new StringTextComponent(name)),
+                guiLeft + ControlStationScreen.DISPLAY_X - 8,
+                guiTop + ControlStationScreen.DISPLAY_Y + ControlStationScreen.DISPLAY_HEIGHT,
+                screen.width,
+                screen.height,
+                -1,
+                GuiUtils.DEFAULT_BACKGROUND_COLOR,
+                0xFF5DD6F5,
+                (0xFF5DD6F5 & 0xFEFEFE) >> 1 | 0xFF5DD6F5 & 0xFF000000,
+                Minecraft.getInstance().fontRenderer);
     }
 }

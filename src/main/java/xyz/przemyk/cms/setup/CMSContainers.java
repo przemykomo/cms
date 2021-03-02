@@ -15,6 +15,6 @@ public class CMSContainers {
         CONTAINERS.register(eventBus);
     }
 
-    public static final RegistryObject<ContainerType<ControlStationContainer>> CONTROL_STATION = CONTAINERS.register("control_station", () -> new ContainerType<ControlStationContainer>(ControlStationContainer::new));
+    public static final RegistryObject<ContainerType<ControlStationContainer>> CONTROL_STATION = CONTAINERS.register("control_station", () -> new ContainerType<>(ControlStationContainer::new));
 
 }
