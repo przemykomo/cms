@@ -1,0 +1,13 @@
+{
+    "type": "cms:moon",
+    "generator": {
+        "type": "minecraft:noise",
+        "seed": 0,
+        "settings": "cms:moon",
+        "biome_source": {
+            "seed": 0,
+            "biome": "cms:moon_biome",
+            "type": "minecraft:fixed"
+        }
+    }
+}
