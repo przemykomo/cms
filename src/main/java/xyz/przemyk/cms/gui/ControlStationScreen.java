@@ -1,15 +1,16 @@
 package xyz.przemyk.cms.gui;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.ITextComponent;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Inventory;
 import xyz.przemyk.cms.CMSMod;
 import xyz.przemyk.cms.containers.ControlStationContainer;
 
-public class ControlStationScreen extends ContainerScreen<ControlStationContainer> {
+public class ControlStationScreen extends AbstractContainerScreen<ControlStationContainer> {
 
     public static final ResourceLocation TEXTURE = new ResourceLocation(CMSMod.MODID, "textures/gui/control_station.png");
     public static final int DISPLAY_X = 8;
@@ -28,7 +29,7 @@ public class ControlStationScreen extends ContainerScreen<ControlStationContaine
     private final GuiAstroObject sun;
     public GuiAstroObject selectedObject;
 
-    public ControlStationScreen(ControlStationContainer screenContainer, PlayerInventory inv, ITextComponent titleIn) {
+    public ControlStationScreen(ControlStationContainer screenContainer, Inventory inv, Component titleIn) {
         super(screenContainer, inv, titleIn);
         sun = new GuiAstroObject(0, this, "Sun", 176, 0, 3f, 4, 0)
                 .addSatellite(new GuiAstroObject(40, this, "Mercury", 184, 0, 1f, 482, 30))
@@ -45,8 +46,7 @@ public class ControlStationScreen extends ContainerScreen<ControlStationContaine
     }
 
     @Override
-    public void tick() {
-        super.tick();
+    protected void containerTick() {
         ticks++;
 
         if (selectedObject != null) {
@@ -55,44 +55,45 @@ public class ControlStationScreen extends ContainerScreen<ControlStationContaine
     }
 
     @Override
-    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+    public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         renderBackground(matrixStack);
         super.render(matrixStack, mouseX, mouseY, partialTicks);
         if (selectedObject != null) {
-            selectedObject.renderSelected(matrixStack, partialTicks, guiLeft, guiTop);
+            selectedObject.renderSelected(matrixStack, partialTicks, getGuiLeft(), getGuiTop());
         }
-        renderHoveredTooltip(matrixStack, mouseX, mouseY);
+        renderTooltip(matrixStack, mouseX, mouseY);
     }
 
-    @SuppressWarnings({"ConstantConditions", "deprecation"})
     @Override
-    protected void drawGuiContainerBackgroundLayer(MatrixStack matrixStack, float partialTicks, int x, int y) {
-        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        minecraft.getTextureManager().bindTexture(TEXTURE);
-        double scaleFactor = minecraft.getMainWindow().getGuiScaleFactor();
-        blit(matrixStack, guiLeft, guiTop, 0, 0, xSize, ySize);
+    protected void renderBg(PoseStack poseStack, float p_97788_, int p_97789_, int partialTicks) {
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.setShaderTexture(0, TEXTURE);
 
-        RenderSystem.enableScissor((int) ((double)(guiLeft + DISPLAY_X) * scaleFactor),
-                (int) (minecraft.getMainWindow().getFramebufferHeight() - ((guiTop + DISPLAY_HEIGHT + DISPLAY_Y) * scaleFactor)),
+        double scaleFactor = minecraft.getWindow().getGuiScale();
+        blit(poseStack, getGuiLeft(), getGuiTop(), 0, 0, getXSize(), getYSize());
+
+        RenderSystem.enableScissor((int) ((double)(getGuiLeft() + DISPLAY_X) * scaleFactor),
+                (int) (minecraft.getWindow().getHeight() - ((getGuiTop() + DISPLAY_HEIGHT + DISPLAY_Y) * scaleFactor)),
                 (int) (DISPLAY_WIDTH * scaleFactor),
                 (int) (DISPLAY_HEIGHT * scaleFactor));
-        matrixStack.push();
-        matrixStack.translate(guiLeft + DISPLAY_CENTER_X + posX, guiTop + DISPLAY_CENTER_Y + posY, 0);
-        matrixStack.scale((float) scale, (float) scale, (float) scale);
-        sun.render(matrixStack, partialTicks);
-        matrixStack.pop();
+        poseStack.pushPose();
+        poseStack.translate(getGuiLeft() + DISPLAY_CENTER_X + posX, getGuiTop() + DISPLAY_CENTER_Y + posY, 0);
+        poseStack.scale((float) scale, (float) scale, (float) scale);
+        sun.render(poseStack, partialTicks);
+        poseStack.popPose();
         RenderSystem.disableScissor();
     }
 
     @Override
-    protected void renderHoveredTooltip(MatrixStack matrixStack, int mouseX, int mouseY) {
-        if (isPointInRegion(DISPLAY_X, DISPLAY_Y, DISPLAY_WIDTH, DISPLAY_HEIGHT, mouseX, mouseY)) {
-            sun.renderHoveredTooltip(matrixStack, mouseX, mouseY, guiLeft + DISPLAY_CENTER_X + posX, guiTop + DISPLAY_CENTER_Y + posY, scale);
+    protected void renderTooltip(PoseStack matrixStack, int mouseX, int mouseY) {
+        if (isHovering(DISPLAY_X, DISPLAY_Y, DISPLAY_WIDTH, DISPLAY_HEIGHT, mouseX, mouseY)) {
+            sun.renderHoveredTooltip(matrixStack, mouseX, mouseY, getGuiLeft() + DISPLAY_CENTER_X + posX, getGuiTop() + DISPLAY_CENTER_Y + posY, scale);
         }
     }
 
     @Override
-    protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int x, int y) {}
+    protected void renderLabels(PoseStack p_97808_, int p_97809_, int p_97810_) {}
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
@@ -110,7 +111,7 @@ public class ControlStationScreen extends ContainerScreen<ControlStationContaine
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-        if (isPointInRegion(DISPLAY_X, DISPLAY_Y, DISPLAY_WIDTH, DISPLAY_HEIGHT, mouseX, mouseY)) {
+        if (isHovering(DISPLAY_X, DISPLAY_Y, DISPLAY_WIDTH, DISPLAY_HEIGHT, mouseX, mouseY)) {
             posX += dragX;
             posY += dragY;
             return true;
@@ -120,7 +121,7 @@ public class ControlStationScreen extends ContainerScreen<ControlStationContaine
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (sun.mouseClicked(mouseX, mouseY, button, guiLeft + DISPLAY_CENTER_X + posX, guiTop + DISPLAY_CENTER_Y + posY, scale)) {
+        if (sun.mouseClicked(mouseX, mouseY, button, getGuiLeft() + DISPLAY_CENTER_X + posX, getGuiTop() + DISPLAY_CENTER_Y + posY, scale)) {
             return true;
         }
         selectedObject = null;

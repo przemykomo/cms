@@ -1,40 +1,40 @@
 package xyz.przemyk.cms.blocks;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.container.INamedContainerProvider;
-import net.minecraft.inventory.container.SimpleNamedContainerProvider;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import org.jetbrains.annotations.Nullable;
 import xyz.przemyk.cms.containers.ControlStationContainer;
 
 public class ControlStationBlock extends Block {
 
-    private static final ITextComponent CONTAINER_NAME = new TranslationTextComponent("container.control_station");
+    private static final TranslatableComponent CONTAINER_NAME = new TranslatableComponent("container.control_station");
 
     public ControlStationBlock(Properties properties) {
         super(properties);
     }
 
-    @SuppressWarnings("deprecation")
-    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
-        if (worldIn.isRemote) {
-            return ActionResultType.SUCCESS;
+    @Override
+    public InteractionResult use(BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand hand, BlockHitResult blockHitResult) {
+        if (level.isClientSide) {
+            return InteractionResult.SUCCESS;
         } else {
-            player.openContainer(state.getContainer(worldIn, pos));
-            return ActionResultType.CONSUME;
+            player.openMenu(blockState.getMenuProvider(level, blockPos));
+            return InteractionResult.CONSUME;
         }
     }
 
-    @SuppressWarnings("deprecation")
+    @Nullable
     @Override
-    public INamedContainerProvider getContainer(BlockState state, World worldIn, BlockPos pos) {
-        return new SimpleNamedContainerProvider((id, inventory, player) -> new ControlStationContainer(id, inventory), CONTAINER_NAME);
+    public MenuProvider getMenuProvider(BlockState p_60563_, Level p_60564_, BlockPos p_60565_) {
+        return new SimpleMenuProvider((id, inventory, player) -> new ControlStationContainer(id, inventory), CONTAINER_NAME);
     }
 }

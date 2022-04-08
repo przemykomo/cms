@@ -1,20 +1,12 @@
 package xyz.przemyk.cms.gui;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.util.math.vector.Matrix4f;
-import net.minecraft.util.math.vector.Vector2f;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraftforge.fml.client.gui.GuiUtils;
-import org.lwjgl.opengl.GL11;
+import com.mojang.blaze3d.vertex.*;
+import com.mojang.math.Matrix4f;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.world.phys.Vec2;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 
 public class GuiAstroObject {
 
@@ -50,74 +42,74 @@ public class GuiAstroObject {
     }
 
     @SuppressWarnings("unused")
-    public void render(MatrixStack matrixStack, float partialTicks) {
+    public void render(PoseStack matrixStack, float partialTicks) {
         renderOrbit(matrixStack);
-        matrixStack.push();
-        Vector2f pos = getRelativePos();
+        matrixStack.pushPose();
+        Vec2 pos = getRelativePos();
         matrixStack.translate(pos.x, pos.y, 0);
 
-        matrixStack.push();
+        matrixStack.pushPose();
         matrixStack.scale(size, size, size);
         screen.blit(matrixStack, -4, -4, textureX, textureY, 8, 8);
-        matrixStack.pop();
+        matrixStack.popPose();
 
         for (GuiAstroObject satellite : satellites) {
             satellite.render(matrixStack, partialTicks);
         }
-        matrixStack.pop();
+        matrixStack.popPose();
     }
 
-    protected Vector2f getRelativePos() {
+    protected Vec2 getRelativePos() {
         float ticks = (screen.ticks + startingTicks) % orbitTime;
         float sideTicks = ticks % sideTime;
         float scaledSidePos = sideTicks / sideTime * 2 * orbitDistance - orbitDistance;
 
         if (ticks < sideTime) {
-            return new Vector2f(orbitDistance, -scaledSidePos);
+            return new Vec2(orbitDistance, -scaledSidePos);
         }
 
         if (sideTime <= ticks && ticks < sideTime * 2) {
-            return new Vector2f(-scaledSidePos, -orbitDistance);
+            return new Vec2(-scaledSidePos, -orbitDistance);
         }
 
         if (sideTime * 2 <= ticks && ticks < sideTime * 3) {
-            return new Vector2f(-orbitDistance, scaledSidePos);
+            return new Vec2(-orbitDistance, scaledSidePos);
         }
 
-        return new Vector2f(scaledSidePos, orbitDistance);
+        return new Vec2(scaledSidePos, orbitDistance);
     }
 
-    protected Vector2f getAbsolutePos() {
+    protected Vec2 getAbsolutePos() {
         if (parentObject == null) {
             return getRelativePos();
         }
-        Vector2f parentPos = parentObject.getAbsolutePos();
-        Vector2f relativePos = getRelativePos();
-        return new Vector2f(parentPos.x + relativePos.x, parentPos.y + relativePos.y);
+        Vec2 parentPos = parentObject.getAbsolutePos();
+        Vec2 relativePos = getRelativePos();
+        return new Vec2(parentPos.x + relativePos.x, parentPos.y + relativePos.y);
     }
 
-    protected void renderOrbit(MatrixStack matrixStack) {
+    protected void renderOrbit(PoseStack matrixStack) {
         RenderSystem.disableTexture();
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuffer();
+        Tesselator tessellator = Tesselator.getInstance();
+        BufferBuilder bufferbuilder = tessellator.getBuilder();
         RenderSystem.lineWidth(1.0F);
-        bufferbuilder.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_COLOR);
-        Matrix4f matrix4f = matrixStack.getLast().getMatrix();
-        bufferbuilder.pos(matrix4f, -orbitDistance, orbitDistance, 0).color(0.2F, 0.2F, 1F, 1F).endVertex();
-        bufferbuilder.pos(matrix4f, orbitDistance, orbitDistance, 0).color(0.2F, 0.2F, 1F, 1F).endVertex();
-        bufferbuilder.pos(matrix4f, orbitDistance, -orbitDistance, 0).color(0.2F, 0.2F, 1F, 1F).endVertex();
-        bufferbuilder.pos(matrix4f, -orbitDistance, -orbitDistance, 0).color(0.2F, 0.2F, 1F, 1F).endVertex();
-        tessellator.draw();
+        bufferbuilder.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR);
+        Matrix4f matrix4f = matrixStack.last().pose();
+        bufferbuilder.vertex(matrix4f, -orbitDistance, orbitDistance, 0).color(0.2F, 0.2F, 1F, 1F).endVertex();
+        bufferbuilder.vertex(matrix4f, orbitDistance, orbitDistance, 0).color(0.2F, 0.2F, 1F, 1F).endVertex();
+        bufferbuilder.vertex(matrix4f, orbitDistance, -orbitDistance, 0).color(0.2F, 0.2F, 1F, 1F).endVertex();
+        bufferbuilder.vertex(matrix4f, -orbitDistance, -orbitDistance, 0).color(0.2F, 0.2F, 1F, 1F).endVertex();
+        tessellator.end();
         RenderSystem.enableTexture();
     }
 
-    public boolean renderHoveredTooltip(MatrixStack matrixStack, int mouseX, int mouseY, double centerX, double centerY, double scale) {
-        Vector2f pos = getRelativePos();
+    public boolean renderHoveredTooltip(PoseStack matrixStack, int mouseX, int mouseY, double centerX, double centerY, double scale) {
+        Vec2 pos = getRelativePos();
         centerX += pos.x * scale;
         centerY += pos.y * scale;
         double radius = 4 * scale * this.size;
         if (mouseX > centerX - radius && mouseX < centerX + radius && mouseY > centerY - radius && mouseY < centerY + radius) {
-            screen.renderTooltip(matrixStack, new StringTextComponent(name), mouseX, mouseY);
+            screen.renderTooltip(matrixStack, new TextComponent(name), mouseX, mouseY);
             return true;
         }
 
@@ -132,7 +124,7 @@ public class GuiAstroObject {
 
     @SuppressWarnings("unused")
     public boolean mouseClicked(double mouseX, double mouseY, int button, double centerX, double centerY, double scale) {
-        Vector2f pos = getRelativePos();
+        Vec2 pos = getRelativePos();
         centerX += pos.x * scale;
         centerY += pos.y * scale;
         double radius = 4 * scale * this.size;
@@ -151,23 +143,25 @@ public class GuiAstroObject {
     }
 
     public void selectedTick() {
-        Vector2f pos = getAbsolutePos();
+        Vec2 pos = getAbsolutePos();
         screen.posX = -pos.x * screen.scale;
         screen.posY = -pos.y * screen.scale;
     }
 
     @SuppressWarnings("unused")
-    public void renderSelected(MatrixStack matrixStack, float partialTicks, int guiLeft, int guiTop) {
-        GuiUtils.drawHoveringText(matrixStack,
-                Collections.singletonList(new StringTextComponent(name)),
-                guiLeft + ControlStationScreen.DISPLAY_X - 8,
-                guiTop + ControlStationScreen.DISPLAY_Y + ControlStationScreen.DISPLAY_HEIGHT,
-                screen.width,
-                screen.height,
-                -1,
-                GuiUtils.DEFAULT_BACKGROUND_COLOR,
-                0xFF5DD6F5,
-                (0xFF5DD6F5 & 0xFEFEFE) >> 1 | 0xFF5DD6F5 & 0xFF000000,
-                Minecraft.getInstance().fontRenderer);
+    public void renderSelected(PoseStack matrixStack, float partialTicks, int guiLeft, int guiTop) {
+//        screen.renderTooltip(matrixStack,
+//                Collections.singletonList(new TextComponent(name)),
+//                guiLeft + ControlStationScreen.DISPLAY_X - 8,
+//                guiTop + ControlStationScreen.DISPLAY_Y + ControlStationScreen.DISPLAY_HEIGHT,
+//                screen.width,
+//                screen.height,
+//                -1,
+//                GuiUtils.DEFAULT_BACKGROUND_COLOR,
+//                0xFF5DD6F5,
+//                (0xFF5DD6F5 & 0xFEFEFE) >> 1 | 0xFF5DD6F5 & 0xFF000000,
+//                Minecraft.getInstance().font);
+        screen.renderTooltip(matrixStack, new TextComponent(name), guiLeft + ControlStationScreen.DISPLAY_X - 8,
+                guiTop + ControlStationScreen.DISPLAY_Y + ControlStationScreen.DISPLAY_HEIGHT);
     }
 }
